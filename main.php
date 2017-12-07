@@ -83,21 +83,67 @@ $corrector=$corrector.SpellCorrector::correct($v)." ";
  <head>
  <title>PHP Solr Client Example</title>
  </head>
+ <style>
+ #form{
+    margin-bottom:0px;
+    height:100px;
+ }
+ #body{
+   margin-top:-10px;
+   margin-left: -5px;
+   margin-right: -5px;
+ }
+ #head{
+   background-color: #F0F0F0;
+ }
+ #q{
+   width:350px;
+  line-height: 44px;
+  font:16px arial, sans-serif;
+ }
+ #title{
+   text-decoration: none;
+   color:blue;
+   font-size: 18px;
+ }
+ #title:hover{
+   text-decoration: underline;
+ }
+ #url{
+   text-decoration: none;
+   color:green;
+   max-width: 48em;
+ }
+ #res{
+  text-decoration:none;
+ }
+ #res:hover{
+   text-decoration: underline;
+ }
+
+ </style>
  <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
 
  <script src="http://ajax.googleapis.com/ajax/libs/jquery/2.0.0/jquery.min.js"></script>
 <script src="http://code.jquery.com/ui/1.10.2/jquery-ui.js" ></script>
 
 
- <body>
- <form accept-charset="utf-8" method="get">
- <label for="q">Search:</label>
+ <body id="body">
+   <div id = "head">
+ <form id="form" accept-charset="utf-8" method="get" >
+ <img style="height:50px; width:120px;margin-top:20px;margin-left:220px" src="search.png">
+
+  <center style="margin-top:-35px">
  <input class="autocomplete" id="q" name="q" type="text" value="<?php echo htmlspecialchars($query, ENT_QUOTES, 'utf-8'); ?>"/>
+<input style="height:25px" type="submit" value="Submit"/>
 
-<input type=radio name="algo" value="solr" <?php if(isset($_POST['algo']) && $_REQUEST['algo'] == 'solr')  echo ' checked="checked"'?>>Solr lucene</input>
-<input type=radio name="algo" value = "pagerank"<?php if(isset($_POST['algo']) && $_REQUEST['algo'] == 'pagerank')  echo ' checked="checked"'?>>Page Rank</input>
+</br>
+<input type=radio name="algo" value="solr" <?php if((isset($_POST['algo'])) || isset($_REQUEST['algo']) && $_REQUEST['algo'] == 'solr')  echo ' checked="checked"'?>>Solr lucene</input>
+<input type=radio name="algo" value = "pagerank"<?php if((isset($_POST['algo'])) || isset($_REQUEST['algo']) &&  $_REQUEST['algo'] == 'pagerank')  echo ' checked="checked"'?>>Page Rank</input>
+</center>
+</div>
 
-<input type="submit"/>
+
 
  </form>
 <?php
@@ -113,18 +159,20 @@ if ($results)
 // calling main.php again based on corrector variable to display result
 $mean = true;
  if ($corrector != "" && strtolower(trim($corrector)) !== strtolower(trim($query))) {
-          echo '<h3> Showing results for <a href="http://localhost:1234/hw5IR/solr-php-client/main.php?q='.$corrector.'"><i>'.$corrector.'</i></a></h3>';
+          echo '<p style="margin-left:220px;font-size:18px;margin-bottom:0px"> Showing results for <a id="res" href="http://localhost:1234/hw5IR/solr-php-client/main.php?q='.$corrector.'"><i>'.$corrector.'</i></a></p>';
             if(isset($_REQUEST['mean'])){
               $mean= false;
             }
             if($mean){
-          echo '<h4> Search instead for <a href="http://localhost:1234/hw5IR/solr-php-client/main.php?mean=false&&q='.$query.'">'.$query.'</a></h4>';
+          echo '<p style="margin-left:220px;font-size:15px;margin-top:0px"> Search instead for <a id="res" href="http://localhost:1234/hw5IR/solr-php-client/main.php?mean=false&&q='.$query.'">'.$query.'</a></p>';
         }
       }
       ?>
-   <div><h3 style="color: blue">Results <?php echo $start; ?> - <?php echo $end;?> of <?php echo $total; ?>:</h3></div>
-<ol>
+<ol >
+   <h3 style="color: grey;margin-left:180px;margin-bottom:0px">Results <?php echo $start; ?> - <?php echo $end;?> of <?php echo $total; ?>:</h3>
+
 <?php
+$dir = "C:/Users/Monika/Desktop/CS572 - Info. Retrieval/My Assignments/hw4/crawl_data/NYD/NYD/";
 // split the query words if there is multiple words
 $query_split = array();
 $query_split = explode(" ", trim($_REQUEST['q']));
@@ -139,6 +187,7 @@ $query_split = explode(" ", trim($_REQUEST['q']));
 	$id = $doc->id;
 	$exploded = explode('/', $id);
 	$id1 = end($exploded);
+  $actual_id = $dir.$id1;
 
 // assign title
   if(isset($doc->title))
@@ -175,35 +224,65 @@ $query_split = explode(" ", trim($_REQUEST['q']));
   $present = false;
 
 // get and set snippet from title or description
+foreach($query_split as $i)
+{
+  // if(isset($title) && (strpos(strtolower($title),strtolower(trim($i)))==0||strpos(strtolower($title),strtolower(trim($i))))){
+  if(isset($title) && (preg_match("/".strtolower(trim($query))."/i",strtolower($title)))){
+
+  $snippet = strtolower($title);
+
+
+  // echo strtolower($title);
+  $present = true;
+  $_REQUEST['q']=$query;
+  $pattern = "/".trim($query)." /";
+  $replacement = "<b> ".trim($query)." </b>";
+  $snippet = preg_replace($pattern, $replacement, $snippet);
+
+  }
+  // elseif((isset($desc))&& (strpos(strtolower($desc),strtolower(trim($i)))==0||strpos(strtolower($desc),strtolower(trim($i))))){
+  elseif(isset($desc) && (preg_match("/".strtolower(trim($query))."/i",strtolower($desc)))){
+
+    $snippet = strtolower($desc);
+   
+    $present = true;
+    $_REQUEST['q']=$query;
+    $pattern = " /".trim($query)."/ ";
+    $replacement = "<b> ".trim($query)." </b>";
+    $snippet = preg_replace($pattern, $replacement, $snippet);
+
+  }
+}
     $count=0;
     foreach($query_split as $i)
     {
       // if(isset($title) && (strpos(strtolower($title),strtolower(trim($i)))==0||strpos(strtolower($title),strtolower(trim($i))))){
-      if(isset($title) && (preg_match("/".strtolower(trim($i))."/",strtolower($title)))){
+      if(isset($title) && (preg_match("/".strtolower(trim($i))."/i",strtolower($title)))){
         if($count==0){
       $snippet = strtolower($title);
       }
+
+      // echo strtolower($title);
       $present = true;
       $_REQUEST['q']=$i;
-      $pattern = "/".trim($i)."/";
-      $replacement = "<b>".trim($i)."</b>";
+      $pattern = "/".trim($i)." /";
+      $replacement = "<b> ".trim($i)." </b>";
       $snippet = preg_replace($pattern, $replacement, $snippet);
       $count=$count+1;
       }
       // elseif((isset($desc))&& (strpos(strtolower($desc),strtolower(trim($i)))==0||strpos(strtolower($desc),strtolower(trim($i))))){
-      elseif(isset($desc) && (preg_match("/".strtolower(trim($i))."/",strtolower($desc)))){
+      elseif(isset($desc) && (preg_match("/".strtolower(trim($i))."/i",strtolower($desc)))){
         if($count==0){
         $snippet = strtolower($desc);
        }
         $present = true;
         $_REQUEST['q']=$i;
-        $pattern = "/".trim($i)."/";
+        $pattern = " /".trim($i)."/ ";
         $replacement = "<b> ".trim($i)." </b>";
         $snippet = preg_replace($pattern, $replacement, $snippet);
         $count=$count+1;
       }
     }
-$dir = "C:/Users/Monika/Desktop/CS572 - Info. Retrieval/My Assignments/hw4/crawl_data/NYD/NYD/";
 // if snippet is not set from title or description use html downloaded file to get the data for p, h1, h3, a tags in the html file
   if($present == false)
   {
@@ -391,18 +470,24 @@ $dir = "C:/Users/Monika/Desktop/CS572 - Info. Retrieval/My Assignments/hw4/crawl
         }
 ?>
 <!-- display result -->
- <table style="width:100%;border: 1px solid black; text-align: left">
+<center>
+ <table style="width:70%;border: 0px; text-align: left;margin-top:-10px;margin-left:-20px">
 
  <tr>
- <th>TITLE: </th>
- <td><a target="_blank" href="<?php echo $url?>"/><?php echo $title?></td></tr>
- <tr><th>URL: </th>
- <td><a target="_blank" href="<?php echo $url?>"/><?php echo $url?></td></tr>
- </tr><th>ID: </th>
- <td><?php echo $id?></td></tr>
- <tr><th>DESCRIPTION: </th>
+ <!-- <th>TITLE: </th> -->
+ <td><a id="title" target="_blank" href="<?php echo $url?>"/><?php echo $title?></td></tr>
+ <tr>
+ <!-- <th>URL: </th> -->
+ <td><a id="url" target="_blank" href="<?php echo $url?>"/><?php echo $url?></td></tr>
+  </tr>
+  <!--<th>ID: </th> -->
+ <td><?php echo $actual_id?></td></tr>
+ <tr>
+ <!--<th>DESCRIPTION: </th> -->
  <td><?php echo $desc?></td>
- <tr><th>SNIPPET: </th>
+<tr>
+</br></br>
+   <!-- <th>SNIPPET: </th> -->
    <td>
      <?php if(strlen($snippet)>160)
      {
@@ -411,13 +496,14 @@ $dir = "C:/Users/Monika/Desktop/CS572 - Info. Retrieval/My Assignments/hw4/crawl
          $snippet = "...".substr($snippet,$pos+strlen($_REQUEST['q'])-160,163)."...";
        }
        else{
-         $snippet=substr($snippet, 0, 163)."...";
+         $snippet=substr($snippet, 0, 160)."...";
        }
     }
      echo $snippet ?></td>
   </tr>
 
   </table>
+</center>
 <?php
  }
 ?>
